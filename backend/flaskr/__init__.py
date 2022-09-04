@@ -42,8 +42,8 @@ def create_app(test_config=None):
     """
     @app.route("/categories")
     def request_categories():
-        all_categories = []
-        categories = Category.query.all()
+        all_categories = {}
+        categories = Category.query.order_by(Category.id).all()
         for category in categories:
             results = {
                 "category_id": category.id,
@@ -217,12 +217,12 @@ def create_app(test_config=None):
     def play_quizzes():
         try:
             body = request.get_json()
-            previous_question = body.get("previous_question", None)
-            given_category = body.get("given_category", None)
-            given_category_id = given_category["id"]
+            previous_question = body.get("previous_questions", None)
+            quiz_category = body.get("quiz_category", None)
+            quiz_category_id = given_category["id"]
 
-            if given_category_id:
-                all_available_questions = Question.query.filter(Question.category == given_category_id).all()
+            if quiz_category_id:
+                all_available_questions = Question.query.filter(Question.category == quiz_category_id).all()
 
             else:
                 all_available_questions = Questions.query.all()
