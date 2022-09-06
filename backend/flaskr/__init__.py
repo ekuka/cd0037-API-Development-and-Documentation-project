@@ -26,13 +26,14 @@ def create_app(test_config=None):
     """
     @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
+    #CORS(app)
     cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
     """
     @TODO: Use the after_request decorator to set Access-Control-Allow
     """
     @app.after_request
     def after_request(response):
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, true')
         response.headers.add('Access-Control-Allow-Headers', 'GET, POST, PATCH, DELETE, OPTIONS')
         return response
     """
@@ -45,11 +46,7 @@ def create_app(test_config=None):
         all_categories = {}
         categories = Category.query.order_by(Category.id).all()
         for category in categories:
-            results = {
-                "category_id": category.id,
-                "category_task": category.type
-            }
-            all_categories.append(results)
+            all_categories[category.id] = category.type
         return jsonify({
             "success": True,
             "categories": all_categories,
@@ -77,11 +74,11 @@ def create_app(test_config=None):
         for category in categories:
             current_category[category.id]= category.type
 
-            if len(current_questions) == 0:
-                abort(404)
+        if len(current_questions) == 0:
+            abort(404)
         return jsonify({
             "success": True,
-            "current_category": current_category,
+            "current_category": "Art",
             "categories": current_category,
             "questions": current_questions,
             "total_questions": len(Question.query.all())
@@ -190,13 +187,15 @@ def create_app(test_config=None):
     """
     @app.route("/categories/<int:category_id>/questions")
     def get_questions_based_on_category(category_id):
-        questions = Question.query.filter(Question.category == category_id).all()
+        selection = Question.query.filter(Question.category == str(category_id)).all()
         selected_categories = Category.query.filter(Category.id == category_id).all()
+        questions = paginate_questions(request, selection)
         current_category = [category.type for category in selected_categories]
         try:
             return jsonify({
                 "success": True,
-                "questions": [question.question for question in questions],
+                #"questions": [question.question for question in questions],
+                "questions": questions,
                 "current_category": current_category[0],
                 "total_questions": len(questions)
             })
@@ -219,7 +218,7 @@ def create_app(test_config=None):
             body = request.get_json()
             previous_question = body.get("previous_questions", None)
             quiz_category = body.get("quiz_category", None)
-            quiz_category_id = given_category["id"]
+            quiz_category_id = quiz_category["id"]
 
             if quiz_category_id:
                 all_available_questions = Question.query.filter(Question.category == quiz_category_id).all()
