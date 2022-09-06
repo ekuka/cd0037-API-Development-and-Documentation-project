@@ -206,11 +206,11 @@ def create_app(test_config=None):
     """
     @app.route("/categories/<int:category_id>/questions")
     def get_questions_based_on_category(category_id):
-        selection = Question.query.filter
-        (Question.category == str(category_id)).all()
+        selection = Question.query.filter(
+            Question.category == str(category_id)).all()
 
-        selected_categories = Category.query.filter
-        (Category.id == category_id).all()
+        selected_categories = Category.query.filter(
+            Category.id == category_id).all()
 
         questions = paginate_questions(request, selection)
         current_category = [category.type for category in selected_categories]
@@ -245,11 +245,11 @@ def create_app(test_config=None):
             quiz_category_id = quiz_category["id"]
 
             if quiz_category_id:
-                all_available_questions = Question.query.filter
-                (Question.category == quiz_category_id).all()
+                all_available_questions = Question.query.filter(
+                    Question.category == quiz_category_id).all()
 
             else:
-                all_available_questions = Questions.query.all()
+                all_available_questions = Question.query.all()
 
             print(all_available_questions)
             print("all: ", len(all_available_questions))
