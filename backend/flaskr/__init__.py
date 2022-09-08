@@ -3,6 +3,7 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
+import json
 
 from models import setup_db, Question, Category
 
@@ -237,42 +238,30 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     """
     @app.route("/quizzes", methods=['POST'])
-    def play_quizzes():
-        try:
-            body = request.get_json()
-            previous_question = body.get("previous_questions", None)
-            quiz_category = body.get("quiz_category", None)
-            quiz_category_id = quiz_category["id"]
-
-            if quiz_category_id:
-                all_available_questions = Question.query.filter(
-                    Question.category == quiz_category_id).all()
-
-            else:
-                all_available_questions = Question.query.all()
-
-            print(all_available_questions)
-            print("all: ", len(all_available_questions))
-            print("prev: ", len(previous_question))
-            random_question = random.choice(all_available_questions)
-
-            if random_question.id in previous_question:
-                if len(previous_question) > len(all_available_questions):
-                    return jsonify({
-                        "question": None
-                    })
+    def get_question_for_quiz():
+        if request.data:
+            search_data = json.loads(request.data.decode('utf-8'))
+            if (('quiz_category' in search_data and 'id' in search_data['quiz_category']) and
+                'previous_questions' in search_data):
+                questions_query = Question.query.filter_by(
+                    category=search_data['quiz_category']['id']
+                ).filter(
+                    Question.id.notin_(search_data["previous_questions"])
+                ).all()
+                length_of_available_question = len(questions_query)
+                if length_of_available_question > 0:
+                    result = {
+                        "success": True,
+                        "question": Question.format(questions_query[random.randrange(0, length_of_available_question)])
+                    }
                 else:
-                    random_question = random.choice
-                    (all_available_questions)
-            else:
-                question = random_question.format()
-
-            return jsonify({
-                "question": question,
-                "success": True
-            })
-        except:
-            abort(422)
+                    result = {
+                        "success": True,
+                        "question": None
+                    }
+                return jsonify(result)
+            abort(404)
+        abort(422)
     """
     @TODO:
     Create error handlers for all expected errors
