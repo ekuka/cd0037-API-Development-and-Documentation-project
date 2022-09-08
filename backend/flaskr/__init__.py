@@ -240,7 +240,7 @@ def create_app(test_config=None):
     @app.route("/quizzes", methods=['POST'])
     def quiz():
         try:
-            request_data = json.loads(request.data.decode('utf-8'))
+            request_data = json.loads(request.data)
             if (('quiz_category' in request_data and 'id' in request_data['quiz_category']) and
                 'previous_questions' in request_data):
                 questions = Question.query.filter_by(
@@ -250,19 +250,19 @@ def create_app(test_config=None):
                 ).all()
                 len_of_available_question = len(questions)
                 if len_of_available_question > 0:
-                    result = {
+                    return jsonify({
                         "success": True,
                         "question": Question.format(questions[random.randrange(0, len_of_available_question)])
-                    }
+                    })
                 else:
-                    result = {
+                    return jsonify({
                         "success": True,
                         "question": None
-                    }
-                return jsonify(result)
+                    })
             abort(404)
         except:
             abort(422)
+        
     """
     @TODO:
     Create error handlers for all expected errors
