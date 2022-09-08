@@ -238,21 +238,21 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     """
     @app.route("/quizzes", methods=['POST'])
-    def get_question_for_quiz():
-        if request.data:
-            search_data = json.loads(request.data.decode('utf-8'))
-            if (('quiz_category' in search_data and 'id' in search_data['quiz_category']) and
-                'previous_questions' in search_data):
-                questions_query = Question.query.filter_by(
-                    category=search_data['quiz_category']['id']
+    def quiz():
+        try:
+            request_data = json.loads(request.data.decode('utf-8'))
+            if (('quiz_category' in request_data and 'id' in request_data['quiz_category']) and
+                'previous_questions' in request_data):
+                questions = Question.query.filter_by(
+                    category=request_data['quiz_category']['id']
                 ).filter(
-                    Question.id.notin_(search_data["previous_questions"])
+                    Question.id.notin_(request_data["previous_questions"])
                 ).all()
-                length_of_available_question = len(questions_query)
-                if length_of_available_question > 0:
+                len_of_available_question = len(questions)
+                if len_of_available_question > 0:
                     result = {
                         "success": True,
-                        "question": Question.format(questions_query[random.randrange(0, length_of_available_question)])
+                        "question": Question.format(questions[random.randrange(0, len_of_available_question)])
                     }
                 else:
                     result = {
@@ -261,7 +261,8 @@ def create_app(test_config=None):
                     }
                 return jsonify(result)
             abort(404)
-        abort(422)
+        except:
+            abort(422)
     """
     @TODO:
     Create error handlers for all expected errors
